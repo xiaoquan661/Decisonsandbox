@@ -35,7 +35,8 @@ export default defineConfig(() => {
     // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
     assetsInclude: ['**/*.svg', '**/*.csv'],
 
-    // A6 AI 维度推荐 — 浏览器请求 /api/llm/* 时由 dev server 转发到 DeepSeek
+    // 本地开发：浏览器请求 /api/llm 时由 Vite 转发到 DeepSeek。
+    // 线上同一路径分别由 Vercel / Netlify Function 处理。
     // 用户的 key 放在 X-Api-Key 请求头里（不污染 body），proxy 拦截后改写成
     // Authorization 头再转发到 DeepSeek。真实 key 始终留在浏览器↔dev-server 之间。
     // DeepSeek 官方 endpoint: https://api.deepseek.com/chat/completions
@@ -45,8 +46,8 @@ export default defineConfig(() => {
           target: 'https://api.deepseek.com',
           changeOrigin: true,
           secure: true,
-          // /api/llm/chat/completions → https://api.deepseek.com/chat/completions
-          rewrite: (p) => p.replace(/^\/api\/llm/, ''),
+          // /api/llm → https://api.deepseek.com/chat/completions
+          rewrite: () => '/chat/completions',
           configure: (proxy) => {
             proxy.on('proxyReq', (proxyReq, req) => {
               // Node IncomingMessage 头是小写的；用户 key 在 X-Api-Key 里

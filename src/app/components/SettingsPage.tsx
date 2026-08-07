@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Download, Trash2, Info, ChevronRight, Sparkles, Brain, Keyboard, ExternalLink, Check, Sun, Moon, Type } from 'lucide-react';
 import { Decision } from './types';
-import { LS_KEY as API_KEY_LS, hasApiKey } from '../lib/llmClient';
+import { LS_KEY as API_KEY_LS, SS_KEY as API_KEY_SS, hasApiKey } from '../lib/llmClient';
 import { DESIGN_PHILOSOPHY } from '../lib/copy';
 import { getTheme, setTheme, getFontScale, setFontScale, Theme, FontScale } from '../lib/useAppearance';
 
@@ -21,6 +21,7 @@ export function SettingsPage({ decisions, onClearAll }: Props) {
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [editingKey, setEditingKey] = useState(false);
   const [keySaved, setKeySaved] = useState(false);
+  const [rememberKey, setRememberKey] = useState(() => localStorage.getItem(API_KEY_LS) !== null);
   const keyPresent = hasApiKey();
 
   // 外观（主题 / 字号）—— 每次渲染读 localStorage 保证响应
@@ -44,10 +45,11 @@ export function SettingsPage({ decisions, onClearAll }: Props) {
 
   const saveKey = () => {
     const v = apiKeyInput.trim();
+    localStorage.removeItem(API_KEY_LS);
+    sessionStorage.removeItem(API_KEY_SS);
     if (v) {
-      localStorage.setItem(API_KEY_LS, v);
-    } else {
-      localStorage.removeItem(API_KEY_LS);
+      if (rememberKey) localStorage.setItem(API_KEY_LS, v);
+      else sessionStorage.setItem(API_KEY_SS, v);
     }
     // 关键：保存后清空 input，永不回显
     setApiKeyInput('');
@@ -62,6 +64,7 @@ export function SettingsPage({ decisions, onClearAll }: Props) {
     setApiKeyInput('');
     setEditingKey(false);
     localStorage.removeItem(API_KEY_LS);
+    sessionStorage.removeItem(API_KEY_SS);
     window.dispatchEvent(new Event('ai-key-updated'));
   };
 
@@ -178,8 +181,17 @@ export function SettingsPage({ decisions, onClearAll }: Props) {
                       </button>
                     )}
                   </div>
+                  <label className="flex items-center gap-2 text-[10px] text-muted-foreground mb-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={rememberKey}
+                      onChange={(e) => setRememberKey(e.target.checked)}
+                      className="accent-primary"
+                    />
+                    记住此设备（否则关闭浏览器后自动清除）
+                  </label>
                   <p className="text-[10px] text-muted-foreground">
-                    Key 不会被显示在界面上，提交后自动清空输入框。
+                    Key 不会回显；仅在发起 AI 请求时经本站函数转发给 DeepSeek。
                   </p>
                 </>
               )}
@@ -196,7 +208,7 @@ export function SettingsPage({ decisions, onClearAll }: Props) {
             </div>
           </div>
           <p className="text-xs text-muted-foreground mt-2 px-1">
-            Key 仅保存在你本地浏览器（localStorage），仅在 F2 触发 AI 时由 dev 代理转发给 DeepSeek。可随时清除。
+            默认仅在当前浏览器会话保存；本站函数不会持久化或记录 Key。你可以随时清除。
           </p>
         </div>
 

@@ -37,9 +37,8 @@ export function AppShell({
       <header className="h-14 shrink-0 border-b border-border bg-card/90 backdrop-blur-md flex items-center px-4 sm:px-5 gap-3 relative">
         <div className="absolute bottom-0 left-0 h-px w-28 bg-primary" />
         <button onClick={onGoSandbox} className="flex items-center gap-2.5 group">
-          <div className="relative w-8 h-8 border border-border-strong bg-background flex items-center justify-center group-hover:border-primary transition-colors">
-            <Brain size={15} className="text-primary" />
-            <span className="absolute -right-1 -top-1 h-2 w-2 bg-primary border-2 border-card" />
+          <div className="w-8 h-8 text-primary flex items-center justify-center transition-transform group-hover:scale-110">
+            <Brain size={20} strokeWidth={1.8} />
           </div>
           <div className="flex items-center gap-2.5">
             <span className="text-sm font-display font-semibold tracking-[0.08em]">决策沙盘</span>

@@ -491,7 +491,7 @@ export function Step3({ decision, onChange }: { decision: Decision; onChange: (d
               还没配置 API Key
             </h3>
             <p className="text-sm text-muted-foreground mb-4">
-              AI 推荐需要你的 DeepSeek API Key。Key 仅保存在本机浏览器，不会上传到服务器。
+              AI 推荐需要你的 DeepSeek API Key。Key 仅保存在浏览器，并在请求时经本站函数瞬时转发给 DeepSeek，本站不会持久化。
               前往「设置 → AI 推荐」填入即可使用。
             </p>
             <div className="flex gap-2">

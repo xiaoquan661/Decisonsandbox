@@ -8,7 +8,7 @@
 
 ## 这是什么
 
-一个**纯本地**的 PC 端决策辅助工具。打开浏览器就能用，所有数据存在你电脑的 localStorage 里，**不上传任何东西**。
+一个**本地优先**的 PC 端决策辅助工具。决策档案只存在浏览器的 localStorage；只有用户主动使用可选 AI 功能并确认隐私披露后，才会把披露范围内的决策信息发送给 DeepSeek。
 
 当你面对"秋招 offer A 还是 B" / "选毕设课题甲还是乙" / "周末学吉他还是学 Python"这种"差不多、说不出哪个更好"的纠结时，把选项拖进沙盘，AI 帮你识别漏看的维度，给你打分、配权重、推演未来，最后给一个**带理由的推荐**——但**最终选哪个永远是你自己**。
 
@@ -52,8 +52,9 @@
 
 - **送 LLM 的内容**：选项名 + 维度评分 + 权重 + 决策理由（A7）
 - **不送的内容**：时间轴、决策档案、你的身份信息
-- **存储位置**：DeepSeek API Key 存你浏览器 `localStorage`（`deepseek_api_key`），不写文件
-- **生产环境**：当前 v1 仅支持 dev 代理（Vite proxy 转发），生产部署需 server-side proxy
+- **Key 存储**：默认只存当前浏览器会话；用户主动选择“记住此设备”时才存 localStorage
+- **Key 转发**：Vercel / Netlify Function 仅在单次请求中把用户 Key 转发给 DeepSeek，不持久化、不记录
+- **生产环境**：Vercel 与 Netlify 均提供同源 `/api/llm` Serverless Function
 
 ---
 
@@ -104,7 +105,7 @@ A6 / A7 才会出现。点"AI 推荐"按钮会先弹**隐私披露**——同意
 - **图表**：recharts（雷达图）
 - **拖拽**：motion `Reorder`（F1 排序）
 - **存储**：localStorage
-- **LLM**：DeepSeek（OpenAI 兼容，Vite dev proxy 转发）
+- **LLM**：DeepSeek（用户自带 Key；本地 Vite 代理，线上 Vercel / Netlify Function）
 
 ---
 
@@ -129,10 +130,14 @@ Generate Frontend Styles/
 │   │       └── copy.ts                    # 静态文案集中处
 │   └── styles/
 │       ├── theme.css              # 主题 token（深/亮）+ 字号
-│       ├── fonts.css              # Inter Tight / JetBrains Mono
+│       ├── fonts.css              # Noto Serif SC / IBM Plex
 │       └── index.css              # 入口
-├── vite.config.ts                 # 含 /api/llm → DeepSeek 代理
-└── .env.example                   # 占位（真实 Key 写在浏览器里）
+├── server/llmProxy.ts             # 两个平台共用的安全 BYOK 转发逻辑
+├── api/llm.ts                     # Vercel Function 入口
+├── netlify/functions/llm.ts       # Netlify Function 入口
+├── netlify.toml                   # Netlify 构建与 /api/llm 路由
+├── vite.config.ts                 # 本地 /api/llm → DeepSeek 代理
+└── .env.example                   # 无站点方 Key，仅作说明
 ```
 
 ---

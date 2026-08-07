@@ -1,28 +1,28 @@
 // A6 AI 维度推荐 — DeepSeek API 客户端
 //
 // 设计原则（PRD v2.1 § 6.2.6）：
-// - 5s 超时（AbortController）
+// - 15s 超时（AbortController）
 // - 1 次重试
-// - 24h 关键词级缓存（key = category + 选项名 hash）
+// - 24h 会话级缓存（key 包含类别、选项、维度与 prompt 版本）
 // - 失败抛出 Error，由调用方降级（按钮置灰 + inline 错误）
 //
-// Key 来源：用户在前端 "设置 → AI 推荐" 里填入，存到 localStorage。
-// 浏览器调用时把 key 放在 X-Api-Key 头里，由 Vite dev proxy 改写成
-// Authorization 头再转发到 https://api.deepseek.com/chat/completions。
-// 真实 key 永远不进 DeepSeek 的 origin（避免浏览器 CORS 拒请求）。
+// Key 来源：用户在前端 "设置 → AI 推荐" 里填入，默认存 sessionStorage，
+// 用户主动选择“记住此设备”时才存 localStorage。浏览器把 key 放在
+// X-Api-Key 头里，由本地 Vite 代理或线上 Serverless Function 瞬时转发给 DeepSeek。
 
 export type AiDimension = { name: string; reason: string };
 export type AiResponse = { dimensions: AiDimension[] };
 
-const TIMEOUT_MS = 5000;
+const TIMEOUT_MS = 15000;
 const RETRY = 1;
 const CACHE_TTL = 24 * 3600 * 1000;
-const ENDPOINT = '/api/llm/chat/completions';
+const ENDPOINT = '/api/llm';
 export const LS_KEY = 'deepseek_api_key';
+export const SS_KEY = 'deepseek_api_key_session';
 
 export function getApiKey(): string {
   try {
-    return localStorage.getItem(LS_KEY) ?? '';
+    return sessionStorage.getItem(SS_KEY) ?? localStorage.getItem(LS_KEY) ?? '';
   } catch {
     return '';
   }
@@ -37,9 +37,10 @@ export function hasApiKey(): boolean {
 // 泛型 `unknown` — A6 / A7 各自解析各自的 shape；写入时用 unknown，读取时由调用方断言
 const cache = new Map<string, { ts: number; data: unknown }>();
 
-function cacheKey(category: string, optionNames: string[]): string {
+function cacheKey(category: string, optionNames: string[], existingDims: string[]): string {
   const sorted = optionNames.slice().sort().join('|');
-  return `${category}::${sorted}`;
+  const dims = existingDims.slice().sort().join('|');
+  return `dim:v2::${category}::${sorted}::${dims}`;
 }
 
 function buildBody(category: string, optionNames: string[], existingDims: string[]) {
@@ -153,7 +154,11 @@ async function callLlm({ systemPrompt, userPrompt, cacheKey, maxTokens = 600 }: 
       }
       return text;
     } catch (e) {
-      lastErr = e as Error;
+      const error = e as Error;
+      if (error.message === 'InvalidApiKey' || (/^HTTP 4\d\d$/.test(error.message) && error.message !== 'HTTP 429')) {
+        throw error;
+      }
+      lastErr = error;
     } finally {
       window.clearTimeout(timer);
     }
@@ -171,7 +176,7 @@ export async function requestDimensions(args: {
     throw new MissingApiKeyError();
   }
 
-  const key = cacheKey(args.category, args.optionNames);
+  const key = cacheKey(args.category, args.optionNames, args.existingDims);
   const hit = cache.get(key);
   if (hit && Date.now() - hit.ts < CACHE_TTL) {
     return hit.data;
@@ -217,7 +222,11 @@ export async function requestDimensions(args: {
       cache.set(key, { ts: Date.now(), data: parsed });
       return parsed;
     } catch (e) {
-      lastErr = e as Error;
+      const error = e as Error;
+      if (error.message === 'InvalidApiKey' || (/^HTTP 4\d\d$/.test(error.message) && error.message !== 'HTTP 429')) {
+        throw error;
+      }
+      lastErr = error;
     } finally {
       window.clearTimeout(timer);
     }
