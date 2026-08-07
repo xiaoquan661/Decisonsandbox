@@ -21,7 +21,7 @@ export function StepSidebar() {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-5 py-4 border-b border-border">
+      <div className="px-5 py-5 border-b border-border bg-sidebar">
         <div className="flex items-center gap-2">
           <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-mono">
             决策流程
@@ -32,13 +32,13 @@ export function StepSidebar() {
             </span>
           )}
         </div>
-        <p className="text-sm text-foreground mt-0.5 font-mono tabular-nums">
+        <p className="text-2xl text-foreground mt-2 font-mono tabular-nums tracking-tight">
           {String(stepIndex + 1).padStart(2, '0')} <span className="text-muted-foreground">/ {String(totalSteps).padStart(2, '0')}</span>
         </p>
       </div>
 
       {/* Steps list */}
-      <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
+      <nav className="flex-1 p-3 pt-5 space-y-1 overflow-y-auto">
         {STEPS.map((s) => {
           const isCurrent = s.key === step;
           // 侧栏是纯导航器：未锁定时 7 步都能自由跳；锁定后也能切换查看每步
@@ -46,10 +46,10 @@ export function StepSidebar() {
             <button
               key={s.key}
               onClick={() => goToStep(s.key)}
-              className={`relative w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-md text-xs transition-colors cursor-pointer ${
+              className={`relative w-full text-left flex items-center gap-3 px-3 py-3 rounded-sm text-xs transition-colors cursor-pointer ${
                 isCurrent
-                  ? 'text-foreground bg-muted/60'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
+                  ? 'text-foreground bg-secondary before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:bg-primary'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
               }`}
             >
               {/* Step indicator with active rail */}

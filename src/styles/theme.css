@@ -41,111 +41,112 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
-/* PC 端亮色主题：白底，浅灰卡片，主色保持 #6366F1 蓝灰低饱和 */
+/* 亮色主题：温润纸张、石墨文字与信号橙标记 */
 .light {
-  --background: #FAFAFA;
-  --foreground: #18181B;
-  --card: #FFFFFF;
-  --card-foreground: #18181B;
-  --popover: #FFFFFF;
-  --popover-foreground: #18181B;
-  --primary: #6366F1;
-  --primary-foreground: #FFFFFF;
-  --secondary: #F4F4F5;
-  --secondary-foreground: #18181B;
-  --muted: #F4F4F5;
-  --muted-foreground: #71717A;
-  --accent: #818CF8;
-  --accent-foreground: #FFFFFF;
-  --destructive: #EF4444;
-  --destructive-foreground: #FFFFFF;
-  --border: #E4E4E7;
-  --border-strong: #D4D4D8;
+  --background: #F1EEE6;
+  --foreground: #23231F;
+  --card: #FAF8F1;
+  --card-foreground: #1D1D1A;
+  --popover: #FFFEF8;
+  --popover-foreground: #1D1D1A;
+  --primary: #E65327;
+  --primary-foreground: #FFF9F1;
+  --secondary: #E7E2D7;
+  --secondary-foreground: #282824;
+  --muted: #E9E5DC;
+  --muted-foreground: #77736B;
+  --accent: #2F6F68;
+  --accent-foreground: #F8F6EF;
+  --destructive: #C83D32;
+  --destructive-foreground: #FFF9F1;
+  --border: #D8D2C6;
+  --border-strong: #BDB6A8;
   --input: transparent;
   --input-background: #FFFFFF;
   --switch-background: #D4D4D8;
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  --ring: #6366F1;
-  --chart-1: #6366F1;
-  --chart-2: #A855F7;
-  --chart-3: #10B981;
-  --chart-4: #F59E0B;
-  --chart-5: #EC4899;
-  --chart-6: #71717A;
-  --radius: 0.5rem;
-  --sidebar: #FFFFFF;
-  --sidebar-foreground: #18181B;
-  --sidebar-primary: #6366F1;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #F4F4F5;
-  --sidebar-accent-foreground: #18181B;
-  --sidebar-border: #E4E4E7;
-  --sidebar-ring: #6366F1;
+  --ring: #E65327;
+  --chart-1: #E65327;
+  --chart-2: #2F6F68;
+  --chart-3: #6E835A;
+  --chart-4: #C18A2D;
+  --chart-5: #9A5965;
+  --chart-6: #77736B;
+  --radius: 0.35rem;
+  --sidebar: #EAE6DD;
+  --sidebar-foreground: #23231F;
+  --sidebar-primary: #E65327;
+  --sidebar-primary-foreground: #FFF9F1;
+  --sidebar-accent: #DDD8CC;
+  --sidebar-accent-foreground: #23231F;
+  --sidebar-border: #D2CCC0;
+  --sidebar-ring: #E65327;
 
-  --success: #10B981;
-  --warning: #F59E0B;
-  --danger: #EF4444;
+  --success: #557B61;
+  --warning: #B47A1B;
+  --danger: #C83D32;
 
-  --font-sans: 'Inter Tight', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-sans: 'IBM Plex Sans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+  --font-display: 'Noto Serif SC', 'Songti SC', STSong, serif;
 
   --radius-card: 8px;
   --radius-button: 6px;
   --radius-tag: 4px;
 }
 
-/* PC 端深色主题：克制工具感（Linear / Raycast 路线）
-   主色 #6366F1 蓝灰低饱和 · 背景 #0A0A0B · 卡片 #14141A */
+/* 深色主题：石墨实验台、骨白标注与信号橙刻度 */
 .dark {
-  --background: #0A0A0B;
-  --foreground: #E4E4E7;
-  --card: #14141A;
-  --card-foreground: #E4E4E7;
-  --popover: #1B1B23;
-  --popover-foreground: #E4E4E7;
-  --primary: #6366F1;
-  --primary-foreground: #FFFFFF;
-  --secondary: #1B1B23;
-  --secondary-foreground: #E4E4E7;
-  --muted: #1F1F29;
-  --muted-foreground: #71717A;
-  --accent: #818CF8;
-  --accent-foreground: #FFFFFF;
-  --destructive: #EF4444;
-  --destructive-foreground: #FFFFFF;
-  --border: #1F1F29;
-  --border-strong: #2A2A36;
+  --background: #10100E;
+  --foreground: #E9E5DA;
+  --card: #171714;
+  --card-foreground: #F1EDE2;
+  --popover: #1C1C18;
+  --popover-foreground: #F1EDE2;
+  --primary: #FF6537;
+  --primary-foreground: #17120F;
+  --secondary: #22221D;
+  --secondary-foreground: #E9E5DA;
+  --muted: #24241F;
+  --muted-foreground: #8E8A80;
+  --accent: #A7C7A2;
+  --accent-foreground: #10100E;
+  --destructive: #FF5C51;
+  --destructive-foreground: #16110F;
+  --border: #2B2B25;
+  --border-strong: #44443B;
   --input: transparent;
   --input-background: #14141A;
   --switch-background: #2A2A36;
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  --ring: #6366F1;
-  --chart-1: #6366F1;
-  --chart-2: #A855F7;
-  --chart-3: #10B981;
-  --chart-4: #F59E0B;
-  --chart-5: #EC4899;
-  --chart-6: #71717A;
-  --radius: 0.5rem;
-  --sidebar: #0F0F12;
-  --sidebar-foreground: #E4E4E7;
-  --sidebar-primary: #6366F1;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #1B1B23;
-  --sidebar-accent-foreground: #E4E4E7;
-  --sidebar-border: #1F1F29;
-  --sidebar-ring: #6366F1;
+  --ring: #FF6537;
+  --chart-1: #FF6537;
+  --chart-2: #A7C7A2;
+  --chart-3: #7DA98B;
+  --chart-4: #E7B65A;
+  --chart-5: #C77C8D;
+  --chart-6: #8E8A80;
+  --radius: 0.35rem;
+  --sidebar: #131310;
+  --sidebar-foreground: #E9E5DA;
+  --sidebar-primary: #FF6537;
+  --sidebar-primary-foreground: #17120F;
+  --sidebar-accent: #20201B;
+  --sidebar-accent-foreground: #E9E5DA;
+  --sidebar-border: #292923;
+  --sidebar-ring: #FF6537;
 
   /* 状态色（成功 / 警告 / 危险）— 与 PRD 12.1 风险等级对齐 */
-  --success: #10B981;
-  --warning: #F59E0B;
-  --danger: #EF4444;
+  --success: #7DA98B;
+  --warning: #E7B65A;
+  --danger: #FF5C51;
 
   /* 字体 */
-  --font-sans: 'Inter Tight', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-sans: 'IBM Plex Sans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+  --font-display: 'Noto Serif SC', 'Songti SC', STSong, serif;
 
   /* 圆角 */
   --radius-card: 8px;
@@ -199,6 +200,7 @@
   --color-sidebar-ring: var(--sidebar-ring);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
+  --font-display: var(--font-display);
   --radius-card: var(--radius-card);
   --radius-button: var(--radius-button);
   --radius-tag: var(--radius-tag);
@@ -211,7 +213,16 @@
 
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: 'kern' 1, 'ss02' 1;
   }
+
+  ::selection {
+    background: color-mix(in srgb, var(--primary) 32%, transparent);
+  }
+
+  button, [role='button'] { cursor: pointer; }
+
+  :focus-visible { outline-color: var(--primary); }
 
   /**
   * Default typography styles for HTML elements (h1-h4, p, label, button, input).

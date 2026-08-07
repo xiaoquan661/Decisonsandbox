@@ -22,14 +22,15 @@ export function PersistentLeftNav({
 }: Props) {
   const sandboxActive = currentTab === 'sandbox';
   return (
-    <div className="shrink-0 border-t border-border p-2 space-y-0.5">
+    <div className="shrink-0 border-t border-border p-3 space-y-1 bg-sidebar">
+      <p className="px-3 pb-1 text-[8px] text-muted-foreground font-mono tracking-[0.2em]">SYSTEM NAV</p>
       {/* 沙盘按钮：wizard 模式下作为"返回沙盘"快捷入口 */}
       <button
         onClick={onGoSandbox}
-        className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-xs transition-colors ${
+        className={`relative w-full flex items-center gap-2.5 px-3 py-2.5 rounded-sm text-xs transition-colors ${
           sandboxActive || inWizard
-            ? 'bg-muted/60 text-foreground'
-            : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
+            ? 'bg-secondary text-foreground before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:bg-primary'
+            : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
         }`}
       >
         <LayoutGrid size={13} />
@@ -43,10 +44,10 @@ export function PersistentLeftNav({
 
       <button
         onClick={onGoArchive}
-        className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-xs transition-colors ${
+        className={`relative w-full flex items-center gap-2.5 px-3 py-2.5 rounded-sm text-xs transition-colors ${
           currentTab === 'archive'
-            ? 'bg-muted/60 text-foreground'
-            : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
+            ? 'bg-secondary text-foreground before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:bg-primary'
+            : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
         }`}
       >
         <Archive size={13} />
@@ -54,10 +55,10 @@ export function PersistentLeftNav({
       </button>
       <button
         onClick={onGoSettings}
-        className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-xs transition-colors ${
+        className={`relative w-full flex items-center gap-2.5 px-3 py-2.5 rounded-sm text-xs transition-colors ${
           currentTab === 'settings'
-            ? 'bg-muted/60 text-foreground'
-            : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
+            ? 'bg-secondary text-foreground before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:bg-primary'
+            : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
         }`}
       >
         <SettingsIcon size={13} />

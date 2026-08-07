@@ -9,7 +9,10 @@ import {
 } from 'recharts';
 import { Decision } from './types';
 
-const OPTION_COLORS = ['#6366F1', '#A855F7', '#10B981', '#F59E0B', '#EC4899', '#71717A'];
+const OPTION_COLORS = [
+  'var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)',
+  'var(--chart-4)', 'var(--chart-5)', 'var(--chart-6)',
+];
 
 interface RadarPreviewProps {
   decision: Decision;
@@ -43,7 +46,7 @@ export function RadarPreview({ decision, hoveredOptionId }: RadarPreviewProps) {
           <PolarGrid stroke="#1F1F29" strokeDasharray="2 2" />
           <PolarAngleAxis
             dataKey="dimension"
-            tick={{ fill: '#71717A', fontSize: 10, fontFamily: 'JetBrains Mono' }}
+            tick={{ fill: 'var(--muted-foreground)', fontSize: 10, fontFamily: 'IBM Plex Mono' }}
           />
           <PolarRadiusAxis
             angle={90}
@@ -76,7 +79,7 @@ export function RadarPreview({ decision, hoveredOptionId }: RadarPreviewProps) {
               border: '1px solid #1F1F29',
               borderRadius: 6,
               fontSize: 11,
-              fontFamily: 'JetBrains Mono',
+              fontFamily: 'IBM Plex Mono',
               padding: '6px 10px',
             }}
             labelStyle={{ color: '#E4E4E7', marginBottom: 4 }}
