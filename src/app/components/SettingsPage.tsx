@@ -4,6 +4,13 @@ import { Decision } from './types';
 import { LS_KEY as API_KEY_LS, SS_KEY as API_KEY_SS, hasApiKey } from '../lib/llmClient';
 import { DESIGN_PHILOSOPHY } from '../lib/copy';
 import { getTheme, setTheme, getFontScale, setFontScale, Theme, FontScale } from '../lib/useAppearance';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from './ui/dialog';
 
 interface Props {
   decisions: Decision[];
@@ -120,6 +127,10 @@ export function SettingsPage({ decisions, onClearAll }: Props) {
               </div>
               <button
                 onClick={toggleAi}
+                type="button"
+                role="switch"
+                aria-checked={aiEnabled}
+                aria-label="启用 AI 维度推荐"
                 className={`w-11 h-6 rounded-full transition-colors relative ${aiEnabled ? 'bg-primary' : 'bg-switch-background'}`}
               >
                 <div
@@ -158,6 +169,7 @@ export function SettingsPage({ decisions, onClearAll }: Props) {
                   <div className="flex gap-2 mb-2">
                     <input
                       type="password"
+                      aria-label="DeepSeek API Key"
                       value={apiKeyInput}
                       onChange={(e) => setApiKeyInput(e.target.value)}
                       placeholder="sk-..."
@@ -230,6 +242,7 @@ export function SettingsPage({ decisions, onClearAll }: Props) {
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => pickTheme('dark')}
+                  aria-pressed={theme === 'dark'}
                   className={`flex items-center justify-center gap-1.5 py-2 rounded-md text-xs border transition-colors ${
                     theme === 'dark'
                       ? 'bg-primary/10 border-primary/40 text-primary'
@@ -240,6 +253,7 @@ export function SettingsPage({ decisions, onClearAll }: Props) {
                 </button>
                 <button
                   onClick={() => pickTheme('light')}
+                  aria-pressed={theme === 'light'}
                   className={`flex items-center justify-center gap-1.5 py-2 rounded-md text-xs border transition-colors ${
                     theme === 'light'
                       ? 'bg-primary/10 border-primary/40 text-primary'
@@ -264,6 +278,7 @@ export function SettingsPage({ decisions, onClearAll }: Props) {
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => pickFont('standard')}
+                  aria-pressed={fontScale === 'standard'}
                   className={`py-2 rounded-md text-xs border transition-colors ${
                     fontScale === 'standard'
                       ? 'bg-primary/10 border-primary/40 text-primary'
@@ -274,6 +289,7 @@ export function SettingsPage({ decisions, onClearAll }: Props) {
                 </button>
                 <button
                   onClick={() => pickFont('large')}
+                  aria-pressed={fontScale === 'large'}
                   className={`py-2 rounded-md text-xs border transition-colors ${
                     fontScale === 'large'
                       ? 'bg-primary/10 border-primary/40 text-primary'
@@ -334,25 +350,33 @@ export function SettingsPage({ decisions, onClearAll }: Props) {
               </div>
               <ChevronRight size={14} className="text-muted-foreground" />
             </button>
-            <button className="w-full flex items-center justify-between px-4 py-3.5 border-b border-border hover:bg-muted/50 transition-colors">
+            <button
+              onClick={() => document.getElementById('design-philosophy')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+              className="w-full flex items-center justify-between px-4 py-3.5 border-b border-border hover:bg-muted/50 transition-colors"
+            >
               <div className="flex items-center gap-2">
                 <Brain size={15} className="text-accent" />
                 <span className="text-sm text-card-foreground">认知原理说明</span>
               </div>
               <ChevronRight size={14} className="text-muted-foreground" />
             </button>
-            <button className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-muted/50 transition-colors">
+            <a
+              href="https://github.com/xiaoquan661/Decisonsandbox/issues/new"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-muted/50 transition-colors"
+            >
               <div className="flex items-center gap-2">
                 <Info size={15} className="text-muted-foreground" />
                 <span className="text-sm text-card-foreground">反馈问题</span>
               </div>
               <ChevronRight size={14} className="text-muted-foreground" />
-            </button>
+            </a>
           </div>
         </div>
 
         {/* Cognitive principles info */}
-        <div className="bg-secondary border border-border rounded-xl p-4">
+        <div id="design-philosophy" className="bg-secondary border border-border rounded-xl p-4 scroll-mt-6">
           <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
             <Brain size={12} /> 设计理念
           </p>
@@ -363,26 +387,14 @@ export function SettingsPage({ decisions, onClearAll }: Props) {
       </div>
 
       {/* Shortcuts help modal */}
-      {showShortcuts && (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-5"
-          onClick={() => setShowShortcuts(false)}
-        >
-          <div
-            className="bg-card rounded-2xl w-full max-w-md shadow-xl overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
+      <Dialog open={showShortcuts} onOpenChange={setShowShortcuts}>
+          <DialogContent className="bg-card border-border rounded-md w-full max-w-md p-0 gap-0 shadow-xl overflow-hidden">
             <div className="px-5 py-4 border-b border-border flex items-center justify-between">
               <div>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-mono">KEYBOARD</p>
-                <h3 className="text-card-foreground mt-0.5">快捷键帮助</h3>
+                <DialogTitle className="text-base text-card-foreground mt-0.5">快捷键帮助</DialogTitle>
+                <DialogDescription className="sr-only">查看决策沙盘支持的键盘快捷键</DialogDescription>
               </div>
-              <button
-                onClick={() => setShowShortcuts(false)}
-                className="text-muted-foreground hover:text-foreground text-sm"
-              >
-                ✕
-              </button>
             </div>
 
             <div className="p-3 max-h-[60vh] overflow-y-auto space-y-0.5">
@@ -418,18 +430,16 @@ export function SettingsPage({ decisions, onClearAll }: Props) {
               <span>快捷键仅在左侧步骤导航为当前焦点时生效</span>
               <span className="font-mono">v1.0.0-beta</span>
             </div>
-          </div>
-        </div>
-      )}
+          </DialogContent>
+      </Dialog>
 
       {/* Clear confirm modal */}
-      {showClearConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-5">
-          <div className="bg-card rounded-2xl p-5 w-full max-w-sm shadow-xl">
-            <h3 className="text-card-foreground mb-2">确认清除所有数据？</h3>
-            <p className="text-sm text-muted-foreground mb-5">
+      <Dialog open={showClearConfirm} onOpenChange={setShowClearConfirm}>
+          <DialogContent className="bg-card border-border rounded-md p-5 w-full max-w-sm gap-0 shadow-xl">
+            <DialogTitle className="text-base text-card-foreground mb-2">确认清除所有数据？</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground mb-5">
               这将删除本地所有决策档案，操作不可恢复。建议先导出备份。
-            </p>
+            </DialogDescription>
             <div className="flex gap-2">
               <button
                 onClick={handleClear}
@@ -437,16 +447,14 @@ export function SettingsPage({ decisions, onClearAll }: Props) {
               >
                 确认清除
               </button>
-              <button
-                onClick={() => setShowClearConfirm(false)}
-                className="flex-1 py-2.5 bg-muted text-muted-foreground rounded-xl text-sm"
-              >
-                取消
-              </button>
+              <DialogClose asChild>
+                <button className="flex-1 py-2.5 bg-muted text-muted-foreground rounded-xl text-sm">
+                  取消
+                </button>
+              </DialogClose>
             </div>
-          </div>
-        </div>
-      )}
+          </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { Plus } from 'lucide-react';
-import { useDecisions } from './components/useDecisions';
+import { useState, useEffect, useCallback } from 'react';
+import { AlertCircle, Check, LoaderCircle, Plus } from 'lucide-react';
+import { DecisionSaveMode, useDecisions } from './components/useDecisions';
 import { DESIGN_PHILOSOPHY } from './lib/copy';
 import { SandboxHome } from './components/SandboxHome';
 import { SandboxWizard } from './components/SandboxWizard';
@@ -21,20 +21,6 @@ export default function App() {
   const [tab, setTab] = useState<Tab>('sandbox');
   const [view, setView] = useState<View>('home');
   const [activeDecisionId, setActiveDecisionId] = useState<string | null>(null);
-
-  // 监听子组件发出的 navigate 事件（Step3 未配 key 时跳设置页）
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const detail = (e as CustomEvent<{ tab: Tab }>).detail;
-      if (detail?.tab) {
-        setTab(detail.tab);
-        setView('home');
-        setActiveDecisionId(null);
-      }
-    };
-    window.addEventListener('navigate', handler);
-    return () => window.removeEventListener('navigate', handler);
-  }, []);
 
   const activeDecision = activeDecisionId
     ? decisions.find((d) => d.id === activeDecisionId) ?? null
@@ -57,10 +43,10 @@ export default function App() {
     setActiveDecisionId(null);
   };
 
-  const handleSave = (d: Decision) => {
-    upsert(d);
-    if (!activeDecisionId) setActiveDecisionId(d.id);
-  };
+  const handleSave = useCallback((d: Decision, mode: DecisionSaveMode) => {
+    upsert(d, mode);
+    if (mode === 'commit') setActiveDecisionId((current) => current ?? d.id);
+  }, [upsert]);
 
   const handleClearAll = () => {
     decisions.forEach((d) => remove(d.id));
@@ -108,7 +94,7 @@ function PCLayout({
   startNew: () => void;
   openDecision: (id: string) => void;
   backToHome: () => void;
-  handleSave: (d: Decision) => void;
+  handleSave: (d: Decision, mode: DecisionSaveMode) => void;
   handleClearAll: () => void;
 }) {
   const inWizard = tab === 'sandbox' && view === 'wizard';
@@ -165,23 +151,57 @@ function PCWizardLayout({
   startNew: () => void;
   openDecision: (id: string) => void;
   backToHome: () => void;
-  handleSave: (d: Decision) => void;
+  handleSave: (d: Decision, mode: DecisionSaveMode) => void;
   handleClearAll: () => void;
 }) {
   const wizardState = useWizardState(activeDecision, handleSave);
 
+  const leaveWizard = () => {
+    if (!wizardState.flushSave()) return;
+    backToHome();
+  };
+
   // 包装 tab 切换：离开 wizard 时一定重置 view，避免下次点沙盘 tab 又自动回 wizard
-  const goArchive = () => { setTab('archive'); setView('home'); };
-  const goSettings = () => { setTab('settings'); setView('home'); };
-  const goSandbox = () => { setTab('sandbox'); setView('home'); };
+  const goArchive = useCallback(() => { if (!wizardState.flushSave()) return; setTab('archive'); setView('home'); }, [setTab, setView, wizardState.flushSave]);
+  const goSettings = useCallback(() => { if (!wizardState.flushSave()) return; setTab('settings'); setView('home'); }, [setTab, setView, wizardState.flushSave]);
+  const goSandbox = useCallback(() => { if (!wizardState.flushSave()) return; setTab('sandbox'); setView('home'); }, [setTab, setView, wizardState.flushSave]);
+
+  // AI Key 引导也必须经过同一离开通道，不能绕过草稿保存。
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent<{ tab: Tab }>).detail;
+      if (detail?.tab === 'settings') goSettings();
+      else if (detail?.tab === 'archive') goArchive();
+      else if (detail?.tab === 'sandbox') goSandbox();
+    };
+    window.addEventListener('navigate', handler);
+    return () => window.removeEventListener('navigate', handler);
+  }, [goArchive, goSandbox, goSettings]);
 
   return (
     <AppShell
       wizardState={wizardState}
       currentTab={tab}
       onGoSandbox={goSandbox}
-      topTitle={activeDecision?.title || wizardState.decision.title || '新建沙盘'}
-      onEscBack={backToHome}
+      topTitle={wizardState.decision.title || activeDecision?.title || '新建沙盘'}
+      topMeta={
+        wizardState.saveStatus !== 'idle' ? (
+          <span
+            className="hidden sm:flex items-center gap-1.5 text-[9px] text-muted-foreground font-mono tracking-wide"
+            role="status"
+            aria-live="polite"
+          >
+            {wizardState.saveStatus === 'saving' ? (
+              <><LoaderCircle size={10} className="animate-spin" /> 自动保存中</>
+            ) : wizardState.saveStatus === 'error' ? (
+              <><AlertCircle size={10} className="text-danger" /> 保存失败，请重试</>
+            ) : (
+              <><Check size={10} className="text-success" /> 已保存到本机</>
+            )}
+          </span>
+        ) : null
+      }
+      onEscBack={leaveWizard}
       bottomNav={
         <PersistentLeftNav
           currentTab={tab}
@@ -193,7 +213,7 @@ function PCWizardLayout({
       }
       sidebar={<StepSidebar />}
       main={
-        <SandboxWizard key={activeDecision?.id ?? 'new-wizard'} onBack={backToHome} />
+        <SandboxWizard key={wizardState.decision.id} onBack={leaveWizard} />
       }
       right={<RightPanel />}
     />
@@ -221,7 +241,7 @@ function PCNonWizardLayout({
   startNew: () => void;
   openDecision: (id: string) => void;
   backToHome: () => void;
-  handleSave: (d: Decision) => void;
+  handleSave: (d: Decision, mode: DecisionSaveMode) => void;
   handleClearAll: () => void;
 }) {
   const goArchive = () => { setTab('archive'); setView('home'); };

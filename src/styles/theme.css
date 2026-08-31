@@ -49,12 +49,12 @@
   --card-foreground: #1D1D1A;
   --popover: #FFFEF8;
   --popover-foreground: #1D1D1A;
-  --primary: #E65327;
+  --primary: #AD3813;
   --primary-foreground: #FFF9F1;
   --secondary: #E7E2D7;
   --secondary-foreground: #282824;
   --muted: #E9E5DC;
-  --muted-foreground: #77736B;
+  --muted-foreground: #6F6B63;
   --accent: #2F6F68;
   --accent-foreground: #F8F6EF;
   --destructive: #C83D32;
@@ -66,8 +66,8 @@
   --switch-background: #D4D4D8;
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  --ring: #E65327;
-  --chart-1: #E65327;
+  --ring: #AD3813;
+  --chart-1: #AD3813;
   --chart-2: #2F6F68;
   --chart-3: #6E835A;
   --chart-4: #C18A2D;
@@ -76,16 +76,16 @@
   --radius: 0.35rem;
   --sidebar: #EAE6DD;
   --sidebar-foreground: #23231F;
-  --sidebar-primary: #E65327;
+  --sidebar-primary: #AD3813;
   --sidebar-primary-foreground: #FFF9F1;
   --sidebar-accent: #DDD8CC;
   --sidebar-accent-foreground: #23231F;
   --sidebar-border: #D2CCC0;
-  --sidebar-ring: #E65327;
+  --sidebar-ring: #AD3813;
 
-  --success: #557B61;
-  --warning: #B47A1B;
-  --danger: #C83D32;
+  --success: #456B50;
+  --warning: #875507;
+  --danger: #B32F26;
 
   --font-sans: 'IBM Plex Sans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
@@ -222,7 +222,10 @@
 
   button, [role='button'] { cursor: pointer; }
 
-  :focus-visible { outline-color: var(--primary); }
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--ring) !important;
+    outline-offset: 2px;
+  }
 
   /**
   * Default typography styles for HTML elements (h1-h4, p, label, button, input).

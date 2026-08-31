@@ -8,6 +8,7 @@ import {
 } from './SandboxWizard.steps';
 import { useWizard } from './WizardContext';
 import { UseWizardState } from './useWizardState';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from './ui/dialog';
 
 interface WizardProps {
   onBack: () => void;
@@ -154,13 +155,12 @@ function LockedView({ decision, onUnlock }: {
       )}
 
       {/* 解锁确认弹框 */}
-      {confirmUnlock && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-5">
-          <div className="bg-card rounded-2xl p-5 w-full max-w-sm shadow-xl">
-            <h3 className="text-card-foreground mb-2">确认解锁这个决策？</h3>
-            <p className="text-sm text-muted-foreground mb-5">
+      <Dialog open={confirmUnlock} onOpenChange={setConfirmUnlock}>
+          <DialogContent className="bg-card border-border rounded-md p-5 w-full max-w-sm gap-0 shadow-xl">
+            <DialogTitle className="text-base text-card-foreground mb-2">确认解锁这个决策？</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground mb-5">
               解锁后所有字段（标题、选项、维度、评分、权重、时间轴、最终选择、决策理由）都可以修改，再次锁定时锁定时间会更新。
-            </p>
+            </DialogDescription>
             <div className="flex gap-2">
               <button
                 onClick={() => { onUnlock(); setConfirmUnlock(false); }}
@@ -175,9 +175,8 @@ function LockedView({ decision, onUnlock }: {
                 取消
               </button>
             </div>
-          </div>
-        </div>
-      )}
+          </DialogContent>
+      </Dialog>
     </div>
   );
 }

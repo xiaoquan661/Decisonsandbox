@@ -2,8 +2,12 @@
 // 必须在 PC 三栏布局顶层使用
 
 import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { X } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from './ui/dialog';
 
 interface KeyboardShortcutsProps {
   onBack?: () => void; // Esc 退出回调
@@ -28,10 +32,12 @@ export function KeyboardShortcuts({ onBack }: KeyboardShortcutsProps) {
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      // 焦点在表单元素时不触发
-      const tag = (e.target as HTMLElement)?.tagName;
-      const inField = tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable;
-      if (inField) return;
+      const target = e.target as HTMLElement | null;
+      const inInteractiveElement = !!target?.closest(
+        'input, textarea, select, button, a, [role="button"], [contenteditable="true"]'
+      );
+      const inDialog = !!target?.closest('[role="dialog"]');
+      if (e.defaultPrevented || inInteractiveElement || inDialog) return;
 
       if (e.key === '?') {
         e.preventDefault();
@@ -53,38 +59,17 @@ export function KeyboardShortcuts({ onBack }: KeyboardShortcutsProps) {
   }, [open, onBack]);
 
   return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.15 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-          onClick={() => setOpen(false)}
-        >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: 8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: 8 }}
-            transition={{ duration: 0.18, ease: 'easeOut' }}
-            onClick={(e) => e.stopPropagation()}
-            className="bg-card border border-border rounded-md w-[480px] max-w-[90vw] shadow-2xl overflow-hidden"
-          >
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="bg-card border-border rounded-md w-[480px] max-w-[90vw] p-0 gap-0 shadow-2xl overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-border">
               <div>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-mono">
                   KEYBOARD
                 </p>
-                <p className="text-sm text-foreground font-medium mt-0.5">快捷键</p>
+                <DialogTitle className="text-sm text-foreground font-medium mt-0.5">快捷键</DialogTitle>
+                <DialogDescription className="sr-only">查看决策流程支持的键盘快捷键</DialogDescription>
               </div>
-              <button
-                onClick={() => setOpen(false)}
-                className="p-1 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <X size={14} />
-              </button>
             </div>
 
             {/* List */}
@@ -114,9 +99,7 @@ export function KeyboardShortcuts({ onBack }: KeyboardShortcutsProps) {
               <span>按 <kbd className="font-mono bg-muted border border-border rounded px-1 py-0.5">?</kbd> 或 <kbd className="font-mono bg-muted border border-border rounded px-1 py-0.5">Esc</kbd> 关闭</span>
               <span className="font-mono">v1.0.0</span>
             </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+      </DialogContent>
+    </Dialog>
   );
 }

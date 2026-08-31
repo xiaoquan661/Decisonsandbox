@@ -6,7 +6,7 @@ import {
   ScoringPreview, WeightsPreview, TimelinePreview, LockPreview,
 } from './RightPanel.previews';
 import { Button } from './ui/button';
-import { ArrowRight, ArrowLeft, Save } from 'lucide-react';
+import { AlertCircle, ArrowRight, ArrowLeft, Check, Save } from 'lucide-react';
 
 const PREVIEW_MAP: Record<string, () => React.ReactNode> = {
   title: () => <TitlePreview />,
@@ -71,18 +71,29 @@ export function RightPanel() {
 
       {/* 底部：上一步 / 下一步 / 保存 */}
       <div className="p-4 border-t border-border bg-card/40 space-y-2">
-        <Button
-          onClick={ctx.goNext}
-          disabled={!ctx.canGoNext}
-          className="w-full h-9 text-xs"
-        >
-          {step === 'timeline' ? '完成推演' : step === 'lock' ? '锁定决策' : '下一步'}
-          <ArrowRight size={13} className="ml-1" />
-        </Button>
-        <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+        {ctx.locked ? (
+          <div className="w-full min-h-9 px-3 flex items-center justify-center text-center text-[10px] text-muted-foreground border border-dashed border-border font-mono">
+            决策已锁定 · 解锁后可继续编辑
+          </div>
+        ) : step !== 'lock' ? (
+          <Button
+            onClick={ctx.goNext}
+            disabled={!ctx.canGoNext}
+            className="w-full h-9 text-xs"
+          >
+            {step === 'timeline' ? '完成推演' : '下一步'}
+            <ArrowRight size={13} className="ml-1" />
+          </Button>
+        ) : (
+          <div className="w-full min-h-9 px-3 flex items-center justify-center text-center text-[10px] text-muted-foreground border border-dashed border-border font-mono">
+            在主面板选择最终选项并完成锁定
+          </div>
+        )}
+        {!ctx.locked && <div className="flex items-center justify-between text-[10px] text-muted-foreground">
           <button
             onClick={ctx.goPrev}
-            className="flex items-center gap-0.5 hover:text-foreground transition-colors"
+            disabled={ctx.stepIndex === 0}
+            className="flex items-center gap-0.5 hover:text-foreground transition-colors disabled:opacity-30 disabled:pointer-events-none"
           >
             <ArrowLeft size={10} /> 上一步
           </button>
@@ -90,9 +101,16 @@ export function RightPanel() {
             onClick={ctx.save}
             className="flex items-center gap-0.5 hover:text-foreground transition-colors"
           >
-            <Save size={10} /> 保存
+            {ctx.saveStatus === 'saved' ? (
+              <Check size={10} className="text-success" />
+            ) : ctx.saveStatus === 'error' ? (
+              <AlertCircle size={10} className="text-danger" />
+            ) : (
+              <Save size={10} />
+            )}
+            {ctx.saveStatus === 'saved' ? '已保存' : ctx.saveStatus === 'error' ? '重试保存' : '保存'}
           </button>
-        </div>
+        </div>}
       </div>
     </div>
   );

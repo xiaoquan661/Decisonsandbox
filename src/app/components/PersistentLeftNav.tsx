@@ -27,6 +27,7 @@ export function PersistentLeftNav({
       {/* 沙盘按钮：wizard 模式下作为"返回沙盘"快捷入口 */}
       <button
         onClick={onGoSandbox}
+        aria-current={sandboxActive || inWizard ? 'page' : undefined}
         className={`relative w-full flex items-center gap-2.5 px-3 py-2.5 rounded-sm text-xs transition-colors ${
           sandboxActive || inWizard
             ? 'bg-secondary text-foreground before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:bg-primary'
@@ -44,6 +45,7 @@ export function PersistentLeftNav({
 
       <button
         onClick={onGoArchive}
+        aria-current={currentTab === 'archive' ? 'page' : undefined}
         className={`relative w-full flex items-center gap-2.5 px-3 py-2.5 rounded-sm text-xs transition-colors ${
           currentTab === 'archive'
             ? 'bg-secondary text-foreground before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:bg-primary'
@@ -55,6 +57,7 @@ export function PersistentLeftNav({
       </button>
       <button
         onClick={onGoSettings}
+        aria-current={currentTab === 'settings' ? 'page' : undefined}
         className={`relative w-full flex items-center gap-2.5 px-3 py-2.5 rounded-sm text-xs transition-colors ${
           currentTab === 'settings'
             ? 'bg-secondary text-foreground before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:bg-primary'

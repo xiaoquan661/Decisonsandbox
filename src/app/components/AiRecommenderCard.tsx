@@ -2,17 +2,28 @@
 //
 // 设计原则（PRD v2.2 § 6.7）：
 // - AI 是草稿不是决策：仅给推荐 + 理由，采纳由用户主动点按钮
-// - 5s 超时 / 1 次重试 / 24h 缓存（在 llmClient.requestRecommendation 内）
+// - 25s 客户端超时 / 1 次重试 / 24h 会话缓存（在 llmClient.requestRecommendation 内）
 // - 隐私披露首次必弹，已同意后本决策不再弹
 // - 失败：按钮置灰 + inline 错误；不阻塞 F7 主流程
 // - 不送时间轴：只用结构化偏好（选项+评分+权重+理由）
 // - 同一决策限 1 次：返回结果后按钮变成"已采纳"或"重新分析"
 
 import { useState, useEffect } from 'react';
-import { Sparkles, AlertCircle, Settings as SettingsIcon, Check, RefreshCw, X, ChevronRight } from 'lucide-react';
+import {
+  Sparkles,
+  AlertCircle,
+  Settings as SettingsIcon,
+  Check,
+  RefreshCw,
+  ChevronRight,
+  Scale,
+  ShieldAlert,
+  MoveRight,
+} from 'lucide-react';
 import { useWizard } from './WizardContext';
 import { normalizeWeights } from './SandboxWizard.steps';
 import { hasApiKey, MissingApiKeyError, requestRecommendation, AiRecommendation } from '../lib/llmClient';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from './ui/dialog';
 
 const CONSENT_LS = 'ai_recommendation_consent';
 
@@ -106,7 +117,7 @@ export function AiRecommenderCard() {
           name: d.name,
           weightPct: Math.round((nw[d.id] ?? 0) * 100),
         })),
-        reason: decision.reason.slice(0, 200),
+        reason: decision.reason.slice(0, 600),
       });
       setAiResult(res);
     } catch (e) {
@@ -184,9 +195,9 @@ export function AiRecommenderCard() {
 
         {/* 结果展示 */}
         {aiResult && (
-          <div className="bg-primary/5 border border-primary/20 rounded-md p-3 mt-1">
+          <div className="bg-primary/5 border border-primary/20 rounded-md p-3 mt-1 space-y-3">
             {/* 推荐选项名 */}
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2">
               <ChevronRight size={12} className="text-primary shrink-0" />
               <span className="text-sm text-primary font-medium truncate flex-1">
                 {aiResult.recommendation}
@@ -212,37 +223,101 @@ export function AiRecommenderCard() {
               </p>
             )}
 
-            {/* 理由列表 */}
-            {aiResult.reasons.length > 0 && (
-              <ul className="space-y-1 mb-2">
-                {aiResult.reasons.map((r, i) => (
-                  <li key={i} className="text-[11px] text-foreground/80 leading-relaxed flex gap-1.5">
-                    <span className="text-muted-foreground shrink-0 font-mono">·</span>
-                    <span className="flex-1">{r}</span>
-                  </li>
-                ))}
-              </ul>
+            {aiResult.summary && (
+              <div className="border-l-2 border-primary/50 pl-2.5">
+                <p className="text-[9px] text-muted-foreground font-mono uppercase tracking-widest mb-1">
+                  核心判断
+                </p>
+                <p className="text-[11px] text-foreground/90 leading-relaxed">
+                  {aiResult.summary}
+                </p>
+              </div>
             )}
 
-            <button
-              onClick={reset}
-              className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-0.5"
-            >
-              <RefreshCw size={9} /> 重新分析
-            </button>
+            {/* 可追溯理由 */}
+            {aiResult.reasons.length > 0 && (
+              <div>
+                <p className="text-[9px] text-muted-foreground font-mono uppercase tracking-widest mb-1.5">
+                  关键依据 / {String(aiResult.reasons.length).padStart(2, '0')}
+                </p>
+                <ul className="space-y-2">
+                  {aiResult.reasons.map((reason, index) => (
+                    <li key={`${reason.title}-${index}`} className="grid grid-cols-[18px_1fr] gap-1.5">
+                      <span className="text-[9px] text-primary/70 font-mono pt-0.5">
+                        {String(index + 1).padStart(2, '0')}
+                      </span>
+                      <div>
+                        <p className="text-[11px] text-foreground font-medium mb-0.5">{reason.title}</p>
+                        <p className="text-[10px] text-foreground/80 leading-relaxed">{reason.analysis}</p>
+                        {reason.evidence && (
+                          <p className="text-[9px] text-muted-foreground leading-relaxed mt-0.5 font-mono">
+                            ↳ {reason.evidence}
+                          </p>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {aiResult.tradeoffs.length > 0 && (
+              <div className="border-t border-primary/15 pt-2">
+                <p className="flex items-center gap-1 text-[9px] text-warning font-mono uppercase tracking-widest mb-1.5">
+                  <Scale size={10} /> 关键权衡
+                </p>
+                <ul className="space-y-1">
+                  {aiResult.tradeoffs.map((tradeoff, index) => (
+                    <li key={index} className="text-[10px] text-foreground/75 leading-relaxed flex gap-1.5">
+                      <span className="text-warning/70 shrink-0">—</span>
+                      <span className="flex-1">{tradeoff}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {aiResult.uncertainty && (
+              <div className="flex gap-1.5 rounded-sm border border-dashed border-border px-2 py-1.5">
+                <ShieldAlert size={10} className="text-muted-foreground shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-[9px] text-muted-foreground font-mono uppercase tracking-wider mb-0.5">不确定性</p>
+                  <p className="text-[10px] text-foreground/75 leading-relaxed">{aiResult.uncertainty}</p>
+                </div>
+              </div>
+            )}
+
+            {aiResult.nextStep && (
+              <div className="bg-primary/10 px-2 py-1.5 flex gap-1.5">
+                <MoveRight size={10} className="text-primary shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-[9px] text-primary font-mono uppercase tracking-wider mb-0.5">下一步验证</p>
+                  <p className="text-[10px] text-foreground leading-relaxed">{aiResult.nextStep}</p>
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between border-t border-primary/15 pt-2">
+              <p className="text-[9px] text-muted-foreground">AI 分析仅作为决策草稿</p>
+              <button
+                onClick={reset}
+                className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-0.5"
+              >
+                <RefreshCw size={9} /> 重新分析
+              </button>
+            </div>
           </div>
         )}
       </div>
 
       {/* 隐私弹窗 */}
-      {showPrivacyModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-end z-50 p-4">
-          <div className="bg-card rounded-md p-5 w-full max-w-sm mx-auto shadow-xl border border-border">
-            <h3 className="text-foreground mb-2">使用 AI 综合推荐前</h3>
-            <p className="text-sm text-muted-foreground mb-4">
+      <Dialog open={showPrivacyModal} onOpenChange={setShowPrivacyModal}>
+          <DialogContent className="bg-card border-border rounded-md p-5 w-full max-w-sm gap-0 shadow-xl">
+            <DialogTitle className="text-base text-foreground mb-2">使用 AI 综合推荐前</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground mb-4">
               将把你的<span className="text-foreground">选项名、维度评分、权重、决策理由</span>发送至 DeepSeek（<span className="font-mono text-xs">api.deepseek.com</span>）以生成分析推荐。
               <span className="text-foreground">时间轴内容不会被发送</span>。
-            </p>
+            </DialogDescription>
             <div className="flex gap-2">
               <button
                 onClick={() => {
@@ -262,22 +337,20 @@ export function AiRecommenderCard() {
                 不同意
               </button>
             </div>
-          </div>
-        </div>
-      )}
+          </DialogContent>
+      </Dialog>
 
       {/* Key 缺失弹窗 */}
-      {showKeyMissingModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-end z-50 p-4">
-          <div className="bg-card rounded-md p-5 w-full max-w-sm mx-auto shadow-xl border border-border">
-            <h3 className="text-foreground mb-2 flex items-center gap-2">
+      <Dialog open={showKeyMissingModal} onOpenChange={setShowKeyMissingModal}>
+          <DialogContent className="bg-card border-border rounded-md p-5 w-full max-w-sm gap-0 shadow-xl">
+            <DialogTitle className="text-base text-foreground mb-2 flex items-center gap-2">
               <SettingsIcon size={15} className="text-primary" />
               还没配置 API Key
-            </h3>
-            <p className="text-sm text-muted-foreground mb-4">
+            </DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground mb-4">
               AI 综合推荐需要你的 DeepSeek API Key。Key 仅保存在浏览器，并在请求时经本站函数瞬时转发给 DeepSeek，本站不会持久化。
               前往「设置 → AI 推荐」填入即可使用。
-            </p>
+            </DialogDescription>
             <div className="flex gap-2">
               <button
                 onClick={goToSettings}
@@ -292,9 +365,8 @@ export function AiRecommenderCard() {
                 稍后
               </button>
             </div>
-          </div>
-        </div>
-      )}
+          </DialogContent>
+      </Dialog>
     </>
   );
 }

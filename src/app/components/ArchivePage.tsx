@@ -64,6 +64,7 @@ export function ArchivePage({ decisions, onOpen }: Props) {
         <div className="flex items-center gap-2 bg-input-background border border-border rounded-xl px-3 py-2.5">
           <Search size={15} className="text-muted-foreground shrink-0" />
           <input
+            aria-label="搜索决策标题或选项"
             className="flex-1 bg-transparent text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none"
             placeholder="搜索决策标题或选项..."
             value={search}
@@ -77,6 +78,7 @@ export function ArchivePage({ decisions, onOpen }: Props) {
         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
           <button
             onClick={() => setFilterCat('all')}
+            aria-pressed={filterCat === 'all'}
             className={`px-3 py-1.5 rounded-full text-xs border whitespace-nowrap transition-all ${
               filterCat === 'all' ? 'bg-primary text-primary-foreground border-primary' : 'bg-card border-border text-muted-foreground'
             }`}
@@ -87,6 +89,7 @@ export function ArchivePage({ decisions, onOpen }: Props) {
             <button
               key={key}
               onClick={() => setFilterCat(filterCat === key ? 'all' : key)}
+              aria-pressed={filterCat === key}
               className={`px-3 py-1.5 rounded-full text-xs border whitespace-nowrap transition-all ${
                 filterCat === key ? 'bg-primary text-primary-foreground border-primary' : 'bg-card border-border text-muted-foreground'
               }`}
@@ -96,6 +99,7 @@ export function ArchivePage({ decisions, onOpen }: Props) {
           ))}
           <button
             onClick={() => setFilterStatus(filterStatus === 'pending_review' ? 'all' : 'pending_review')}
+            aria-pressed={filterStatus === 'pending_review'}
             className={`px-3 py-1.5 rounded-full text-xs border whitespace-nowrap transition-all ${
               filterStatus === 'pending_review' ? 'bg-amber-500 text-white border-amber-500' : 'bg-card border-border text-muted-foreground'
             }`}

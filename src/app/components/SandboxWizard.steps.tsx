@@ -11,6 +11,8 @@ import {
   DIMENSION_TEMPLATES, CATEGORY_LABELS,
 } from './types';
 import { requestDimensions, MissingApiKeyError, hasApiKey } from '../lib/llmClient';
+import { getLockIssue } from '../lib/wizardValidation';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from './ui/dialog';
 
 function uid() {
   return Math.random().toString(36).slice(2, 10);
@@ -43,6 +45,7 @@ export function Step1({ decision, onChange }: { decision: Decision; onChange: (d
       <p className="text-sm text-muted-foreground mb-5">给这次决策起个名字</p>
 
       <input
+        aria-label="决策标题"
         className="w-full bg-input-background border border-border rounded-md px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 mb-5"
         placeholder="例如：秋招 offer 选择"
         value={decision.title}
@@ -57,6 +60,7 @@ export function Step1({ decision, onChange }: { decision: Decision; onChange: (d
           <button
             key={key}
             onClick={() => onChange({ category: key })}
+            aria-pressed={decision.category === key}
             className={`py-3 rounded-md border text-sm transition-all ${
               decision.category === key
                 ? 'bg-primary text-primary-foreground border-primary'
@@ -78,6 +82,7 @@ import { GripVertical } from 'lucide-react';
 
 export function Step2({ decision, onChange }: { decision: Decision; onChange: (d: Partial<Decision>) => void }) {
   const options = decision.options;
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const addOption = () => {
     if (options.length >= 6) return;
@@ -92,7 +97,22 @@ export function Step2({ decision, onChange }: { decision: Decision; onChange: (d
 
   const removeOption = (id: string) => {
     if (options.length <= 2) return;
-    onChange({ options: options.filter((o) => o.id !== id) });
+    const remainingNodes = decision.timelineNodes.filter((node) => node.optionId !== id);
+    onChange({
+      options: options.filter((o) => o.id !== id),
+      selectedOptionId: decision.selectedOptionId === id ? undefined : decision.selectedOptionId,
+      timelineNodes: remainingNodes,
+      timelineSkipped: decision.timelineNodes.length > 0 && remainingNodes.length === 0
+        ? true
+        : decision.timelineSkipped,
+    });
+    setPendingDeleteId(null);
+  };
+
+  const requestRemoveOption = (id: string) => {
+    const hasReferences = decision.selectedOptionId === id || decision.timelineNodes.some((node) => node.optionId === id);
+    if (hasReferences) setPendingDeleteId(id);
+    else removeOption(id);
   };
 
   const reorder = (newOrder: DecisionOption[]) => {
@@ -127,6 +147,7 @@ export function Step2({ decision, onChange }: { decision: Decision; onChange: (d
               {String.fromCharCode(65 + i)}
             </span>
             <input
+              aria-label={`选项 ${String.fromCharCode(65 + i)} 名称`}
               className="flex-1 bg-transparent text-foreground placeholder:text-muted-foreground focus:outline-none text-sm"
               value={opt.name}
               onChange={(e) => updateName(opt.id, e.target.value)}
@@ -134,9 +155,10 @@ export function Step2({ decision, onChange }: { decision: Decision; onChange: (d
             />
             {options.length > 2 && (
               <button
-                onClick={() => removeOption(opt.id)}
+                onClick={() => requestRemoveOption(opt.id)}
                 className="p-1 text-muted-foreground hover:text-destructive transition-colors"
                 title="删除"
+                aria-label={`删除选项 ${opt.name || String.fromCharCode(65 + i)}`}
               >
                 <Trash2 size={13} />
               </button>
@@ -165,6 +187,39 @@ export function Step2({ decision, onChange }: { decision: Decision; onChange: (d
           建议拆分为多次决策，选项过多可能增加决策难度
         </div>
       )}
+
+      <Dialog open={!!pendingDeleteId} onOpenChange={(open) => !open && setPendingDeleteId(null)}>
+        <DialogContent className="bg-card border-border rounded-md p-5 w-full max-w-sm gap-0 shadow-xl">
+          <DialogTitle className="text-base text-foreground mb-2">删除这个选项？</DialogTitle>
+          <DialogDescription className="text-sm text-muted-foreground mb-5">
+            {(() => {
+              const option = options.find((item) => item.id === pendingDeleteId);
+              const nodeCount = decision.timelineNodes.filter((node) => node.optionId === pendingDeleteId).length;
+              const impacts = [
+                nodeCount > 0 ? `${nodeCount} 条关联时间轴记录` : '',
+                decision.selectedOptionId === pendingDeleteId ? '当前最终选择' : '',
+              ].filter(Boolean).join('和');
+              return `删除「${option?.name || '未命名选项'}」后，将同时移除${impacts || '相关数据'}。此操作会自动保存。`;
+            })()}
+          </DialogDescription>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => pendingDeleteId && removeOption(pendingDeleteId)}
+              className="flex-1 py-2.5 bg-destructive text-destructive-foreground rounded-md text-sm"
+            >
+              确认删除
+            </button>
+            <button
+              type="button"
+              onClick={() => setPendingDeleteId(null)}
+              className="flex-1 py-2.5 bg-muted text-muted-foreground rounded-md text-sm"
+            >
+              取消
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -295,6 +350,7 @@ export function Step3({ decision, onChange }: { decision: Decision; onChange: (d
                 <button
                   key={name}
                   onClick={() => toggleDimension(name)}
+                  aria-pressed={selected}
                   className={`px-3 py-1.5 rounded-full text-sm border transition-all ${
                     selected
                       ? 'bg-primary text-primary-foreground border-primary'
@@ -324,6 +380,7 @@ export function Step3({ decision, onChange }: { decision: Decision; onChange: (d
                   <button
                     key={name}
                     onClick={() => toggleDimension(name)}
+                    aria-pressed={selected}
                     className={`px-3 py-1.5 rounded-full text-sm border transition-all ${
                       selected
                         ? 'bg-primary text-primary-foreground border-primary'
@@ -341,6 +398,7 @@ export function Step3({ decision, onChange }: { decision: Decision; onChange: (d
 
       <div className="flex gap-2 mt-4 mb-4">
         <input
+          aria-label="自定义评估维度"
           className="flex-1 bg-input-background border border-border rounded-md px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
           placeholder="自定义维度..."
           value={customInput}
@@ -350,6 +408,7 @@ export function Step3({ decision, onChange }: { decision: Decision; onChange: (d
         <button
           onClick={addCustom}
           disabled={!customInput.trim()}
+          aria-label="添加自定义维度"
           className="px-3 py-2 bg-primary text-primary-foreground rounded-md disabled:opacity-40 transition-opacity"
         >
           <Plus size={16} />
@@ -367,7 +426,11 @@ export function Step3({ decision, onChange }: { decision: Decision; onChange: (d
               >
                 {d.aiRecommended && <Sparkles size={10} className="text-primary" />}
                 {d.name}
-                <button onClick={() => removeDim(d.id)} className="ml-1 text-muted-foreground hover:text-destructive">
+                <button
+                  onClick={() => removeDim(d.id)}
+                  className="ml-1 text-muted-foreground hover:text-destructive"
+                  aria-label={`移除维度 ${d.name}`}
+                >
                   <X size={12} />
                 </button>
               </div>
@@ -453,14 +516,13 @@ export function Step3({ decision, onChange }: { decision: Decision; onChange: (d
         </div>
       )}
 
-      {showPrivacyModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-end z-50 p-4">
-          <div className="bg-card rounded-md p-5 w-full max-w-sm mx-auto shadow-xl border border-border">
-            <h3 className="text-foreground mb-2">使用 AI 推荐前</h3>
-            <p className="text-sm text-muted-foreground mb-4">
+      <Dialog open={showPrivacyModal} onOpenChange={setShowPrivacyModal}>
+          <DialogContent className="bg-card border-border rounded-md p-5 w-full max-w-sm gap-0 shadow-xl">
+            <DialogTitle className="text-base text-foreground mb-2">使用 AI 推荐前</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground mb-4">
               使用 AI 推荐功能将把你的选项名称发送至 DeepSeek（<span className="font-mono text-xs">api.deepseek.com</span>）以生成维度建议。
               你的决策理由、时间轴内容和档案数据不会被发送。
-            </p>
+            </DialogDescription>
             <div className="flex gap-2">
               <button
                 onClick={() => {
@@ -479,21 +541,19 @@ export function Step3({ decision, onChange }: { decision: Decision; onChange: (d
                 不同意
               </button>
             </div>
-          </div>
-        </div>
-      )}
+          </DialogContent>
+      </Dialog>
 
-      {showKeyMissingModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-end z-50 p-4">
-          <div className="bg-card rounded-md p-5 w-full max-w-sm mx-auto shadow-xl border border-border">
-            <h3 className="text-foreground mb-2 flex items-center gap-2">
+      <Dialog open={showKeyMissingModal} onOpenChange={setShowKeyMissingModal}>
+          <DialogContent className="bg-card border-border rounded-md p-5 w-full max-w-sm gap-0 shadow-xl">
+            <DialogTitle className="text-base text-foreground mb-2 flex items-center gap-2">
               <SettingsIcon size={15} className="text-primary" />
               还没配置 API Key
-            </h3>
-            <p className="text-sm text-muted-foreground mb-4">
+            </DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground mb-4">
               AI 推荐需要你的 DeepSeek API Key。Key 仅保存在浏览器，并在请求时经本站函数瞬时转发给 DeepSeek，本站不会持久化。
               前往「设置 → AI 推荐」填入即可使用。
-            </p>
+            </DialogDescription>
             <div className="flex gap-2">
               <button
                 onClick={goToSettings}
@@ -508,9 +568,8 @@ export function Step3({ decision, onChange }: { decision: Decision; onChange: (d
                 稍后
               </button>
             </div>
-          </div>
-        </div>
-      )}
+          </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -555,6 +614,8 @@ export function Step4b({ decision, onChange }: { decision: Decision; onChange: (
                     </div>
                     <input
                       type="range"
+                      aria-label={`${opt.name}在${dim.name}维度的评分`}
+                      aria-valuetext={`${score} 分`}
                       min={0}
                       max={10}
                       step={0.5}
@@ -615,6 +676,8 @@ export function Step4({ decision, onChange }: { decision: Decision; onChange: (d
             </div>
             <input
               type="range"
+              aria-label={`${d.name}的权重`}
+              aria-valuetext={`${d.weight}，归一化后 ${Math.round((nw[d.id] ?? 0) * 100)}%`}
               min={1}
               max={100}
               value={d.weight}
@@ -740,6 +803,7 @@ export function Step5({
             <button
               key={m}
               onClick={() => onChange({ timelineSpan: m })}
+              aria-pressed={span === m}
               className={`px-3 py-1 rounded-full text-sm border transition-all ${
                 span === m ? 'bg-primary text-primary-foreground border-primary' : 'bg-card border-border text-foreground'
               }`}
@@ -796,6 +860,7 @@ export function Step5({
                           <button
                             onClick={() => removeNode(n.id)}
                             className="absolute -top-1 -right-1 w-3 h-3 bg-muted rounded-full flex items-center justify-center"
+                            aria-label={`删除节点 ${n.text}`}
                           >
                             <X size={8} />
                           </button>
@@ -814,6 +879,7 @@ export function Step5({
         <p className="text-xs text-muted-foreground mb-3">添加节点</p>
         <div className="flex gap-2 mb-2">
           <select
+            aria-label="时间轴节点所属选项"
             value={newOptId}
             onChange={(e) => setNewOptId(e.target.value)}
             className="flex-1 bg-input-background border border-border rounded-md px-2 py-1.5 text-sm text-foreground focus:outline-none"
@@ -823,6 +889,7 @@ export function Step5({
             ))}
           </select>
           <select
+            aria-label="时间轴节点月份"
             value={newMonth}
             onChange={(e) => setNewMonth(Number(e.target.value))}
             className="bg-input-background border border-border rounded-md px-2 py-1.5 text-sm text-foreground focus:outline-none w-20 font-mono"
@@ -837,6 +904,7 @@ export function Step5({
             <button
               key={s}
               onClick={() => setNewSentiment(s)}
+              aria-pressed={newSentiment === s}
               className={`flex-1 py-1 rounded-md text-xs border transition-all ${
                 newSentiment === s ? SENTIMENT_COLORS[s] : 'border-border text-muted-foreground bg-card'
               }`}
@@ -847,6 +915,7 @@ export function Step5({
         </div>
         <div className="flex gap-2">
           <input
+            aria-label="时间轴节点描述"
             className="flex-1 bg-input-background border border-border rounded-md px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
             placeholder="描述影响..."
             value={newText}
@@ -871,7 +940,7 @@ export function Step5({
 export function Step6({ decision, onChange, onLock }: {
   decision: Decision;
   onChange: (d: Partial<Decision>) => void;
-  onLock: () => void;
+  onLock: (selectedOptionId?: string) => void;
 }) {
   const dims = decision.dimensions;
   const scored = [...decision.options]
@@ -882,6 +951,7 @@ export function Step6({ decision, onChange, onLock }: {
   // 选中态：若用户已选 → 用用户选的；否则默认预选综合评分最高的那个
   const selectedId = decision.selectedOptionId ?? topOption?.opt.id ?? '';
   const selectedOpt = decision.options.find((o) => o.id === selectedId);
+  const lockIssue = getLockIssue(decision, selectedId);
 
   const select = (id: string) => onChange({ selectedOptionId: id });
 
@@ -900,6 +970,7 @@ export function Step6({ decision, onChange, onLock }: {
                 key={opt.id}
                 type="button"
                 onClick={() => select(opt.id)}
+                aria-pressed={isSelected}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md border text-left transition-all cursor-pointer ${
                   isSelected
                     ? 'border-primary bg-primary/10'
@@ -935,6 +1006,7 @@ export function Step6({ decision, onChange, onLock }: {
           决策理由 <span className="text-muted-foreground text-xs">（可选，建议 20 字以上）</span>
         </label>
         <textarea
+          aria-label="决策理由"
           className="w-full bg-input-background border border-border rounded-md px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
           rows={4}
           placeholder="为什么选这个？当时最看重什么？有什么顾虑？"
@@ -954,13 +1026,19 @@ export function Step6({ decision, onChange, onLock }: {
       )}
 
       <button
-        onClick={onLock}
-        disabled={!selectedId}
+        onClick={() => onLock(selectedId)}
+        disabled={!!lockIssue}
         className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-md py-4 hover:opacity-90 active:scale-[0.98] transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
       >
         <Lock size={18} />
         锁定{selectedOpt ? `「${selectedOpt.name}」` : '决策'}，生成档案
       </button>
+
+      {lockIssue && (
+        <p className="text-xs text-warning text-center mt-2">
+          {lockIssue}
+        </p>
+      )}
 
       <p className="text-xs text-muted-foreground text-center mt-3">
         锁定后可在档案页随时解锁继续修改

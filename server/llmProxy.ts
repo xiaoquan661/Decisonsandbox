@@ -1,6 +1,6 @@
 const DEEPSEEK_ENDPOINT = 'https://api.deepseek.com/chat/completions';
 const MAX_BODY_BYTES = 20_000;
-const UPSTREAM_TIMEOUT_MS = 20_000;
+const UPSTREAM_TIMEOUT_MS = 22_000;
 
 type ChatMessage = { role: 'system' | 'user'; content: string };
 
@@ -61,7 +61,7 @@ function normalizeBody(input: unknown): Record<string, unknown> {
     model: 'deepseek-chat',
     messages,
     response_format: { type: 'json_object' },
-    max_tokens: Math.max(100, Math.min(1_000, Math.round(requestedTokens))),
+    max_tokens: Math.max(100, Math.min(1_600, Math.round(requestedTokens))),
     temperature: Math.max(0, Math.min(1, requestedTemperature)),
     stream: false,
   };

@@ -15,7 +15,7 @@ const STEPS: { key: string; label: string; index: number }[] = [
 export function StepSidebar() {
   const ctx = useWizard();
   if (!ctx) return null;
-  const { step, stepIndex, totalSteps, goToStep, decision } = ctx;
+  const { step, stepIndex, totalSteps, highestReachableStepIndex, goToStep, decision } = ctx;
   const locked = decision.status === 'locked';
 
   return (
@@ -41,15 +41,20 @@ export function StepSidebar() {
       <nav className="flex-1 p-3 pt-5 space-y-1 overflow-y-auto">
         {STEPS.map((s) => {
           const isCurrent = s.key === step;
-          // 侧栏是纯导航器：未锁定时 7 步都能自由跳；锁定后也能切换查看每步
+          const isReachable = s.index - 1 <= highestReachableStepIndex;
+          // 锁定后只保留当前摘要，避免步骤数字变化但主内容仍停留在锁定页。
           return (
             <button
               key={s.key}
               onClick={() => goToStep(s.key)}
-              className={`relative w-full text-left flex items-center gap-3 px-3 py-3 rounded-sm text-xs transition-colors cursor-pointer ${
+              disabled={(locked && !isCurrent) || !isReachable}
+              aria-current={isCurrent ? 'step' : undefined}
+              className={`relative w-full text-left flex items-center gap-3 px-3 py-3 rounded-sm text-xs transition-colors disabled:cursor-default ${
                 isCurrent
                   ? 'text-foreground bg-secondary before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:bg-primary'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  : locked || !isReachable
+                    ? 'text-muted-foreground/35'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50 cursor-pointer'
               }`}
             >
               {/* Step indicator with active rail */}

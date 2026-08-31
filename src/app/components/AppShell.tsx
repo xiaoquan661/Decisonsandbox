@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { Brain, Crosshair } from 'lucide-react';
+import { AlertCircle, ArrowLeft, ArrowRight, Brain, Check, Crosshair, Save } from 'lucide-react';
 import { motion } from 'motion/react';
 import { UseWizardState } from './useWizardState';
 import { WizardProvider } from './WizardContext';
@@ -71,12 +71,77 @@ export function AppShell({
           {bottomNav}
         </motion.aside>
 
-        <main className="flex-1 overflow-y-auto scrollbar-none instrument-grid relative">
-          <div className="absolute inset-0 fine-noise opacity-[0.16] pointer-events-none" />
-          <div className="max-w-[920px] mx-auto px-5 sm:px-8 lg:px-10 py-7 sm:py-10">
-            {main}
-          </div>
-        </main>
+        <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
+          <main
+            className="flex-1 overflow-y-auto scrollbar-none instrument-grid relative focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-[-2px]"
+            tabIndex={0}
+            aria-label="主要内容"
+          >
+            <div className="absolute inset-0 fine-noise opacity-[0.16] pointer-events-none" />
+            <div className="max-w-[920px] mx-auto px-5 sm:px-8 lg:px-10 py-7 sm:py-10">
+              {main}
+            </div>
+          </main>
+
+          {/* 右侧预览在中等宽度隐藏时，核心流程操作仍必须可见。 */}
+          {wizardState && !wizardState.locked && (
+            <div className="xl:hidden shrink-0 border-t border-border bg-card/95 backdrop-blur-md px-3 sm:px-5 py-2.5">
+              <div className="max-w-[920px] mx-auto flex items-center gap-2">
+                <div className="hidden md:block mr-auto min-w-28">
+                  <p className="text-[9px] text-muted-foreground font-mono tracking-widest">
+                    STEP {String(wizardState.stepIndex + 1).padStart(2, '0')} / {String(wizardState.totalSteps).padStart(2, '0')}
+                  </p>
+                  <div className="mt-1 h-0.5 bg-muted overflow-hidden">
+                    <div
+                      className="h-full bg-primary transition-all duration-300"
+                      style={{ width: `${((wizardState.stepIndex + 1) / wizardState.totalSteps) * 100}%` }}
+                    />
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={wizardState.goPrev}
+                  disabled={wizardState.stepIndex === 0}
+                  aria-label="上一步"
+                  className="h-9 px-2 md:px-3 inline-flex items-center gap-1.5 whitespace-nowrap border border-border text-xs text-muted-foreground hover:text-foreground hover:border-border-strong disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                >
+                  <ArrowLeft size={13} /> <span className="hidden md:inline">上一步</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={wizardState.save}
+                  aria-label={wizardState.saveStatus === 'saved' ? '已保存' : wizardState.saveStatus === 'error' ? '保存失败，重试' : '保存当前决策'}
+                  className="h-9 px-2 md:px-3 inline-flex items-center gap-1.5 whitespace-nowrap border border-border text-xs text-muted-foreground hover:text-foreground hover:border-border-strong transition-colors"
+                >
+                  {wizardState.saveStatus === 'saved' ? (
+                    <Check size={13} className="text-success" />
+                  ) : wizardState.saveStatus === 'error' ? (
+                    <AlertCircle size={13} className="text-danger" />
+                  ) : (
+                    <Save size={13} />
+                  )}
+                  <span className="hidden md:inline">
+                    {wizardState.saveStatus === 'saved' ? '已保存' : wizardState.saveStatus === 'error' ? '重试保存' : '保存'}
+                  </span>
+                </button>
+                {wizardState.step !== 'lock' ? (
+                  <button
+                    type="button"
+                    onClick={wizardState.goNext}
+                    disabled={!wizardState.canGoNext}
+                    className="h-9 min-w-24 md:min-w-28 px-3 md:px-4 inline-flex items-center justify-center gap-1.5 whitespace-nowrap bg-primary text-primary-foreground text-xs font-medium hover:brightness-110 disabled:opacity-40 disabled:pointer-events-none transition-all"
+                  >
+                    {wizardState.step === 'timeline' ? '完成推演' : '下一步'} <ArrowRight size={13} />
+                  </button>
+                ) : (
+                  <span className="h-9 px-3 inline-flex items-center text-[10px] text-muted-foreground border border-dashed border-border font-mono">
+                    在上方完成锁定
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
 
         <motion.aside
           initial={{ opacity: 0, x: 8 }}
